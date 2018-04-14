@@ -1,0 +1,84 @@
+# Versão do docker-composer á ser utilizada
+version: "3"
+# Serviços que devem ser criados
+services:
+  # Nome do serviço
+  mysql:
+    # Nome do container
+    container_name: mysql
+    # Definições utilizadas para criação do Cluster com Swarm
+    deploy:
+      # Modo como o serviço deve rodar
+      mode: replicated
+      # Quantidade de containers para o serviço
+      replicas: 1
+      # Definições para tentar reiniciar o serviço
+      restart_policy:
+        # Condição onde a tentativa de reinício deve ser feita
+        condition: on-failure
+        # Tempo aguardado para que a tentativa deva ser feita
+        delay: 5s
+        # Número máximo de tantátivas de reinicialização
+        max_attempts: 3
+        # Tempo entre uma tentativa ou outro
+        window: 60s
+      # Recursos que o serviço deve utilizar
+      resources:
+        # Limitação de recursos (hardware)
+        limits:
+          # Limite máximo de memória dada para o serviço
+          memory: 512M
+      # Variáveis de ambiente
+      environment:
+        # Passado o valor root para a variaável de ambiente chamada MYSQL_ROOT_PASSWORD dentro do container
+        - MYSQL_ROOT_PASSWORD=root
+      # Imagem utilizada para subir o serviço
+      image: mysql:5.6
+      # Rede que o serviço deve utilizar
+      networks:
+        # Nome da rede que o serviço deve utilizar
+        main:
+          # Apelido do serviço na rede
+          aliases:
+            # Serviço terá o apeliado igual á mysql
+            - mysql
+      # Portas do container que devem ser mapeadas para a máquina principal
+      ports:
+        # Mapear a porta 3306 do container com a porta 3306 da máquina
+        - 3306:3306
+      # Volumes passados para o container
+      volumes:
+        # O volume do container /var/lib/mysql/ deve ser mapeado e espelhado para /Users/matheus/Desktop/mysql/
+        - /Users/matheus/Desktop/mysql/:/var/lib/mysql/
+      # Definir que o serviço deve iniciar quando a máquina for reiniciada
+      restart: always
+
+  wordpress:
+    container_name: wordpress
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 60s
+      resources:
+        limits:
+          memory: 512M
+      environment:
+        - WORDPRESS_DB_URL=mysql:3306
+        - WORDPRESS_DB_PASSWORD=root
+      image: wordpress
+      networks:
+        main:
+          aliases:
+            - wordpress
+      ports:
+        - 8080:80
+      restart: always
+
+# Redes que o cluster terá
+networks:
+  # O cluster terá uma rede chamada main
+  main:
